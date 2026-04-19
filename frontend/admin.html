@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — PlaceTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css?v=2">
+    <link rel="stylesheet" href="../css/animations.css?v=2">
+
+    <style>
+        /* Admin overrides */
+        :root {
+            --primary: #f43f5e;
+            --primary-glow: rgba(244, 63, 94, 0.5);
+            --accent: #f97316;
+            --accent-glow: rgba(249, 115, 22, 0.5);
+        }
+
+        .admin-hero {
+            padding-top: 10rem;
+            padding-bottom: 4rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .admin-stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .admin-stat-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+                inset 0 0 0 1px rgba(244, 63, 94, 0.1);
+        }
+
+        .stat-value {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Table */
+        .table-wrapper {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1.25rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .data-table th {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .data-table tbody tr {
+            transition: background 0.3s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-pill {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pill-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .pill-review {
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .pill-rejected {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Modules Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .module-card {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .module-card:hover {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: rgba(244, 63, 94, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cinematic-bg"></div>
+    <div id="three-bg-container"></div>
+
+    <nav>
+        <div class="container nav-container">
+            <a href="index.html" class="logo">Place<span style="color:var(--primary)">Track</span></a>
+            <div class="nav-links">
+                <a href="admin.html" class="active">Dashboard</a>
+                <a href="admin-modules.html">Modules</a>
+            </div>
+            <button class="exit-portal-btn" onclick="logoutUser('admin')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" x2="9" y1="12" y2="12"/>
+                </svg>
+                <span>Log out</span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="admin-hero container fade-in-load">
+        <h1 class="section-title">Admin <span class="text-gradient-primary">Dashboard.</span></h1>
+        <p class="text-muted" style="font-size: 1.2rem; max-width: 600px;">
+            Overview of drives, students, and applications.
+        </p>
+    </header>
+
+    <main class="container mb-32">
+        <!-- Stats -->
+        <div class="stats-grid stagger-grid" id="admin-stats">
+            <div class="admin-stat-card stagger-item">
+                <div class="stat-value text-gradient" id="stat-students">--</div>
+                <div class="text-muted"
+                    style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Registered Students</div>
+            </div>
+
+            <div class="admin-stat-card stagger-item">
+                <div class="stat-value text-gradient-primary" id="stat-drives">--</div>
+                <div class="text-muted"
+                    style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Active Drives</div>
+            </div>
+
+            <div class="admin-stat-card stagger-item">
+                <div class="stat-value text-gradient" id="stat-placed">--</div>
+                <div class="text-muted"
+                    style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Students Placed</div>
+            </div>
+        </div>
+
+        <!-- Transmission Log -->
+        <div class="table-wrapper reveal-up">
+            <div class="flex justify-between items-center mb-8">
+                <h3 style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px;">Recent Applications</h3>
+                <button class="btn btn-outline magnetic-btn" onclick="showToast('Data exported!', 'success')"
+                    style="padding: 0.8rem 1.5rem; font-size: 0.85rem;">Export</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Roll No.</th>
+                        <th>Name</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-applications">
+                    <tr><td colspan="5" style="text-align: center;" class="text-muted">Loading applications...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Active Drives Management -->
+        <div class="table-wrapper reveal-up mt-16" style="margin-top: 4rem;">
+            <div class="flex justify-between items-center mb-8">
+                <h3 style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px;">Drive Management</h3>
+                <button class="btn btn-outline magnetic-btn" onclick="createDrive()"
+                    style="padding: 0.8rem 1.5rem; font-size: 0.85rem;">Create New Drive</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-drives-list">
+                    <tr><td colspan="6" style="text-align: center;" class="text-muted">Loading drives...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+    <script>
+        window.OVERRIDE_THREE_COLORS = { primary: 0xf43f5e, accent: 0xf97316 };
+
+        const API = 'http://localhost:3000/api';
+        const adminAuth = JSON.parse(localStorage.getItem('adminAuth'));
+        if (!adminAuth) { window.location.href = 'auth-admin.html'; }
+
+        async function loadAdminData() {
+            try {
+                // Load Stats
+                const statsRes = await fetch(`${API}/admin/stats`);
+                const stats = await statsRes.json();
+                document.getElementById('stat-students').innerText = stats.TotalStudents || 0;
+                document.getElementById('stat-drives').innerText = stats.ActiveDrives || 0;
+                document.getElementById('stat-placed').innerText = stats.StudentsPlaced || 0;
+
+                // Load Applications
+                const appsRes = await fetch(`${API}/admin/applications`);
+                const apps = await appsRes.json();
+                const tbody = document.getElementById('admin-applications');
+
+                // Attach globally for toggling
+                window.adminApplications = apps;
+                window.showingAllApps = window.showingAllApps || false;
+
+                window.renderAdminApplications = () => {
+                    if (window.adminApplications.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;" class="text-muted">No applications found.</td></tr>';
+                        let oldBtn = document.getElementById('toggle-apps-btn');
+                        if (oldBtn) oldBtn.remove();
+                        return;
+                    }
+
+                    const appsToShow = window.showingAllApps ? window.adminApplications : window.adminApplications.slice(0, 5);
+
+                    tbody.innerHTML = appsToShow.map(app => {
+                        let pillClass = 'pill-review';
+                        const statusLower = (app.Status || '').toLowerCase();
+                        if (statusLower === 'accepted') pillClass = 'pill-success';
+                        if (statusLower === 'rejected') pillClass = 'pill-rejected';
+
+                        return `
+                        <tr>
+                            <td style="color: var(--text-muted)">${app.RollNumber}</td>
+                            <td style="font-weight: 500;">${app.StudentName}</td>
+                            <td>${app.CompanyName}</td>
+                            <td><span class="status-pill ${pillClass}">${app.Status}</span></td>
+                            <td><button class="btn btn-outline magnetic-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="viewApplication(${app.ApplicationID}, '${app.StudentName}', '${app.CompanyName}')">View</button></td>
+                        </tr>`;
+                    }).join('');
+
+                    const tableWrapper = tbody.closest('.table-wrapper');
+                    let toggleBtn = document.getElementById('toggle-apps-btn');
+
+                    if (window.adminApplications.length > 5) {
+                        if (!toggleBtn) {
+                            toggleBtn = document.createElement('button');
+                            toggleBtn.id = 'toggle-apps-btn';
+                            toggleBtn.className = 'btn btn-outline w-full magnetic-btn mt-8';
+                            toggleBtn.style.padding = '0.8rem';
+                            toggleBtn.style.marginTop = '1rem';
+                            toggleBtn.style.borderStyle = 'dashed';
+                            toggleBtn.onclick = () => {
+                                window.showingAllApps = !window.showingAllApps;
+                                window.renderAdminApplications();
+                            };
+                            tableWrapper.appendChild(toggleBtn);
+                        }
+                        toggleBtn.innerText = window.showingAllApps ? "Show Less" : `View All Applications (${window.adminApplications.length})`;
+                    } else if (toggleBtn) {
+                        toggleBtn.remove();
+                    }
+                };
+
+                window.renderAdminApplications();
+
+                // Load Drives
+                const drivesRes = await fetch(`${API}/drives`);
+                const drives = await drivesRes.json();
+                const drivesBody = document.getElementById('admin-drives-list');
+                
+                if (drives.length === 0) {
+                    drivesBody.innerHTML = '<tr><td colspan="6" style="text-align: center;" class="text-muted">No active drives.</td></tr>';
+                } else {
+                    drivesBody.innerHTML = drives.map(d => {
+                        const date = new Date(d.Deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        return `
+                        <tr>
+                            <td style="color: var(--text-muted)">#${d.DriveID}</td>
+                            <td style="font-weight: 500;">${d.CompanyName}</td>
+                            <td>${d.Role}</td>
+                            <td>${date}</td>
+                            <td><span class="status-pill pill-success">Active</span></td>
+                            <td>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="btn btn-outline magnetic-btn" onclick="exportDrive(${d.DriveID}, '${d.CompanyName}')" style="padding: 0.3rem 0.8rem; font-size: 0.75rem;">Export CSV</button>
+                                    <button class="btn btn-outline magnetic-btn" onclick="closeDrive(${d.DriveID})" style="padding: 0.3rem 0.8rem; font-size: 0.75rem; border-color: rgba(239,68,68,0.2); color: #f87171;">Close</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+
+            } catch (err) {
+                console.error('Failed to load admin data:', err);
+                showToast("Failed to connect to backend", "error");
+            }
+        }
+
+        async function exportDrive(driveId, companyName) {
+            try {
+                const res = await fetch(`${API}/admin/drives/${driveId}/applicants`);
+                const apps = await res.json();
+                
+                if (apps.length === 0) {
+                    showToast("No applicants to export", "info");
+                    return;
+                }
+
+                // Generate CSV
+                const headers = ["RollNumber", "StudentName", "Email", "CGPA", "Branch", "Status", "AppliedAt"];
+                let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+                
+                apps.forEach(app => {
+                    let row = headers.map(h => `"${app[h]}"`).join(",");
+                    csvContent += row + "\r\n";
+                });
+
+                // Download
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `${companyName.replace(/\s+/g, '_')}_Applicants.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast("Export successful!", "success");
+            } catch (e) {
+                showToast("Failed to export data", "error");
+            }
+        }
+
+        async function closeDrive(driveId) {
+            if (!confirm('Are you sure you want to close this drive? Students will no longer be able to apply.')) return;
+
+            try {
+                const res = await fetch(`${API}/admin/drives/${driveId}/close`, { method: 'PATCH' });
+                if (res.ok) {
+                    showToast("Drive closed", "info");
+                    loadAdminData(); // Refresh list
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // View & updating Applications
+        async function viewApplication(appId, studentName, companyName) {
+            const action = prompt(`Application from ${studentName} to ${companyName}.\nUpdate status to: (Type 'Accepted', 'Rejected', or 'In Review')`);
+            if(!action) return;
+            
+            try {
+                const res = await fetch(`${API}/admin/applications/${appId}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: action })
+                });
+                if(res.ok) {
+                    showToast('Application updated', 'success');
+                    loadAdminData();
+                } else {
+                    showToast('Failed to update', 'error');
+                }
+            } catch(e) {
+                showToast('Server error', 'error');
+            }
+        }
+
+        async function createDrive() {
+            const companyName = prompt("Company Name:");
+            const role = prompt("Role:");
+            const packageLPA = prompt("Package (LPA):");
+            const minCGPA = prompt("Minimum CGPA:");
+            const deadline = prompt("Deadline (YYYY-MM-DD):");
+
+            if (!companyName || !role || !packageLPA) return;
+
+            try {
+                const res = await fetch(`${API}/admin/drives`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyName, role, packageLPA, minCGPA, deadline })
+                });
+
+                if (res.ok) {
+                    showToast("Drive initialized successfully", "success");
+                    loadAdminData(); // Refresh counts
+                } else {
+                    showToast("Failed to initialize drive", "error");
+                }
+            } catch(e) {
+                showToast("Server error", "error");
+            }
+        }
+
+        // Admin operations complete
+
+        // Replace the "Initialize Drive" stub
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAdminData();
+        });
+    </script>
+    <script src="../js/main.js"></script>
+    <script src="../js/threeBackground.js"></script>
+    <script src="../js/scrollAnimations.js"></script>
+    <script src="../js/interactions.js"></script>
+</body>
+
+</html>

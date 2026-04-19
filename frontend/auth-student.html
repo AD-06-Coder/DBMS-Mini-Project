@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login — PlaceTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css?v=2">
+    <link rel="stylesheet" href="../css/animations.css?v=2">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transform: skewX(-20deg);
+            animation: shine 8s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+
+            20% {
+                left: 200%;
+            }
+
+            100% {
+                left: 200%;
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(131, 37, 38, 0.1);
+        }
+
+        .form-label {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus+.form-label,
+        .form-input:not(:placeholder-shown)+.form-label {
+            top: -0.5rem;
+            left: 1rem;
+            font-size: 0.8rem;
+            background: var(--bg-dark);
+            padding: 0 0.5rem;
+            color: var(--primary);
+            border-radius: 4px;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .auth-toggle a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .auth-toggle a:hover {
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        #signup-form {
+            display: none;
+        }
+
+        /* Back to portal link */
+        .back-link {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            z-index: 20;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background layers -->
+    <div class="cinematic-bg"></div>
+    <div id="three-bg-container"></div>
+
+    <header style="position: absolute; top: 0; left: 0; width: 100%; padding: 2rem; z-index: 100;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto;">
+            <a href="index.html" class="logo" style="text-decoration: none; font-size: 1.5rem; font-weight: 900;">
+                Place<span style="color:var(--primary)">Track</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card fade-in-load">
+
+            <!-- Login View -->
+            <div id="login-view">
+                <div class="auth-header">
+                    <h1 class="auth-title text-gradient">Student <span style="color:var(--primary)">Login</span></h1>
+                    <p class="auth-subtitle">Welcome back! Sign in to access the placement portal.</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <input type="email" class="form-input" id="login-email" placeholder=" " required>
+                        <label for="login-email" class="form-label">Email</label>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" class="form-input" id="login-password" placeholder=" " required>
+                        <label for="login-password" class="form-label">Password</label>
+                    </div>
+
+                    <div style="text-align: right; margin-bottom: 2rem;">
+                        <a href="#" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">Forgot password?</a>
+                    </div>
+
+                    <button type="button" onclick="submitAuth('login', 'dashboard.html')"
+                        class="btn btn-primary w-full magnetic-btn" style="padding: 1.25rem;">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="auth-toggle">
+                    Don't have an account? <a href="#" onclick="toggleAuthView('signup')">Sign Up</a>
+                </div>
+            </div>
+
+            <!-- Sign Up View -->
+            <div id="signup-view" style="display: none;">
+                <div class="auth-header">
+                    <h1 class="auth-title text-gradient">Create <span style="color:var(--primary)">Account</span>
+                    </h1>
+                    <p class="auth-subtitle">Register to start tracking your placements.</p>
+                </div>
+
+                <form id="signup-form-actual">
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <input type="text" class="form-input" id="reg-fname" placeholder=" " required>
+                            <label for="reg-fname" class="form-label">First Name</label>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-input" id="reg-lname" placeholder=" " required>
+                            <label for="reg-lname" class="form-label">Last Name</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" class="form-input" id="reg-roll" placeholder=" " required>
+                        <label for="reg-roll" class="form-label">Roll Number</label>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="email" class="form-input" id="reg-email" placeholder=" " required>
+                        <label for="reg-email" class="form-label">Email</label>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" class="form-input" id="reg-password" placeholder=" " required>
+                        <label for="reg-password" class="form-label">Password</label>
+                    </div>
+
+                    <button type="button" onclick="submitAuth('signup', 'dashboard.html')"
+                        class="btn btn-primary w-full magnetic-btn" style="padding: 1.25rem; margin-top: 1rem;">
+                        Sign Up
+                    </button>
+                </form>
+
+                <div class="auth-toggle">
+                    Already have an account? <a href="#" onclick="toggleAuthView('login')">Sign In</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/threeBackground.js"></script>
+    <script src="../js/interactions.js"></script>
+
+    <script>
+        function toggleAuthView(view) {
+            const login = document.getElementById('login-view');
+            const signup = document.getElementById('signup-view');
+            const card = document.querySelector('.auth-card');
+
+            // Quick animate out
+            gsap.to(card, {
+                opacity: 0,
+                y: -20,
+                duration: 0.2,
+                onComplete: () => {
+                    if (view === 'signup') {
+                        login.style.display = 'none';
+                        signup.style.display = 'block';
+                    } else {
+                        signup.style.display = 'none';
+                        login.style.display = 'block';
+                    }
+
+                    // Animate in
+                    gsap.to(card, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.4,
+                        ease: "back.out(1.5)"
+                    });
+                }
+            });
+        }
+
+        async function submitAuth(type, path) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Signing in...";
+            btn.style.opacity = "0.7";
+            btn.style.pointerEvents = "none";
+
+            let url = 'http://localhost:3000/api/auth/student/' + type;
+            let payload = {};
+
+            if (type === 'login') {
+                payload.email = document.getElementById('login-email').value;
+                payload.password = document.getElementById('login-password').value;
+            } else {
+                payload.firstName = document.getElementById('reg-fname').value;
+                payload.lastName = document.getElementById('reg-lname').value;
+                payload.rollNumber = document.getElementById('reg-roll').value;
+                payload.email = document.getElementById('reg-email').value;
+                payload.password = document.getElementById('reg-password').value;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(type === 'login' ? "Signed in successfully!" : "Account created!", "success");
+
+                    if (data.student) localStorage.setItem('studentAuth', JSON.stringify(data.student));
+
+                    gsap.to('.auth-card', {
+                        scale: 0.9,
+                        opacity: 0,
+                        duration: 0.4,
+                        ease: "power2.inOut",
+                        onComplete: () => {
+                            window.location.href = path;
+                        }
+                    });
+                } else {
+                    showToast(data.error || "Authentication failed", "error");
+                    btn.innerText = originalText;
+                    btn.style.opacity = "1";
+                    btn.style.pointerEvents = "auto";
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Server connection failed", "error");
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+        }
+    </script>
+</body>
+
+</html>

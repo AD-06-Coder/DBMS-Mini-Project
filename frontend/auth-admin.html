@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login — PlaceTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css?v=2">
+    <link rel="stylesheet" href="../css/animations.css?v=2">
+
+    <!-- Using the same layout as the student auth, but with a different theme color override -->
+    <style>
+        /* Admin override - Darker, red/orange security theme */
+        :root {
+            --primary: #f43f5e;
+            --primary-glow: rgba(244, 63, 94, 0.5);
+            --accent: #f97316;
+            --accent-glow: rgba(249, 115, 22, 0.5);
+            --glass-border: rgba(244, 63, 94, 0.15);
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(10, 5, 15, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-bottom: 3px solid var(--primary);
+            border-radius: 16px;
+            /* Sharper corners for admin */
+            padding: 3rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--primary-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(244, 63, 94, 0.1), transparent);
+            transform: skewX(-20deg);
+            animation: shine 6s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+
+            20% {
+                left: 200%;
+            }
+
+            100% {
+                left: 200%;
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .auth-subtitle {
+            color: #fca5a5;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+        }
+
+        .form-label {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus+.form-label,
+        .form-input:not(:placeholder-shown)+.form-label {
+            top: -0.5rem;
+            left: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--bg-dark);
+            padding: 0 0.5rem;
+            color: var(--primary);
+            border-radius: 4px;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-toggle a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+
+        .auth-toggle a:hover {
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        /* Back to portal link */
+        .back-link {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            z-index: 20;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        /* Danger button override */
+        .btn-danger {
+            background: var(--primary);
+            color: white;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .btn-danger:hover {
+            background: var(--accent);
+            box-shadow: 0 10px 30px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background layers -->
+    <div class="cinematic-bg"></div>
+    <div id="three-bg-container"></div>
+
+    <header style="position: absolute; top: 0; left: 0; width: 100%; padding: 2rem; z-index: 100;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto;">
+            <a href="index.html" class="logo" style="text-decoration: none; font-size: 1.5rem; font-weight: 900;">
+                Place<span style="color:var(--primary)">Track</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card fade-in-load">
+
+            <!-- Login View -->
+            <div id="login-view">
+                <div class="auth-header">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 2s infinite;">🛡️</div>
+                    <h1 class="auth-title text-gradient">Admin <span style="color:var(--primary)">Login</span></h1>
+                    <p class="auth-subtitle">Sign in to manage placement drives and students.</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <input type="text" class="form-input" id="login-admin-id" placeholder=" " required>
+                        <label for="login-admin-id" class="form-label">Admin Email</label>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" class="form-input" id="login-password" placeholder=" " required>
+                        <label for="login-password" class="form-label">Password</label>
+                    </div>
+
+                    <button type="button" onclick="submitAuth('login', 'admin.html')"
+                        class="btn btn-danger w-full magnetic-btn" style="padding: 1.25rem; margin-top: 1rem;">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="auth-toggle" style="margin-top: 3rem;">
+                    Need an account? <a href="#" onclick="toggleAuthView('signup')">Sign Up</a>
+                </div>
+            </div>
+
+            <!-- Sign Up View -->
+            <div id="signup-view" style="display: none;">
+                <div class="auth-header">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                    <h1 class="auth-title text-gradient">Create <span style="color:var(--primary)">Admin Account</span>
+                    </h1>
+                    <p class="auth-subtitle">Register as a placement coordinator.</p>
+                </div>
+
+                <form id="signup-form-actual">
+                    <div class="form-group">
+                        <input type="text" class="form-input" id="reg-name" placeholder=" " required>
+                        <label for="reg-name" class="form-label">Full Name</label>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="email" class="form-input" id="reg-email" placeholder=" " required>
+                        <label for="reg-email" class="form-label">Email</label>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" class="form-input" id="reg-key" placeholder=" " required>
+                        <label for="reg-key" class="form-label">Password</label>
+                    </div>
+
+                    <button type="button" onclick="submitAuth('signup', 'admin.html')"
+                        class="btn btn-danger w-full magnetic-btn" style="padding: 1.25rem; margin-top: 1rem;">
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="auth-toggle">
+                    Already have an account? <a href="#" onclick="toggleAuthView('login')">Sign In</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        // Override the threeBackground color programmatically for this specific page
+        // since we hardcoded it in the javascript to the boy sequence.
+        window.OVERRIDE_THREE_COLORS = {
+            primary: 0xf43f5e,
+            accent: 0xf97316
+        };
+    </script>
+    <script src="../js/threeBackground.js"></script>
+    <script src="../js/interactions.js"></script>
+
+    <script>
+        function toggleAuthView(view) {
+            const login = document.getElementById('login-view');
+            const signup = document.getElementById('signup-view');
+            const card = document.querySelector('.auth-card');
+
+            // Quick animate out
+            gsap.to(card, {
+                opacity: 0,
+                scale: 0.95,
+                duration: 0.2,
+                onComplete: () => {
+                    if (view === 'signup') {
+                        login.style.display = 'none';
+                        signup.style.display = 'block';
+                    } else {
+                        signup.style.display = 'none';
+                        login.style.display = 'block';
+                    }
+
+                    // Animate in
+                    gsap.to(card, {
+                        opacity: 1,
+                        scale: 1,
+                        duration: 0.4,
+                        ease: "back.out(1.5)"
+                    });
+                }
+            });
+        }
+
+        async function submitAuth(type, path) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Signing in...";
+            btn.style.opacity = "0.7";
+            btn.style.pointerEvents = "none";
+
+            let url = 'http://localhost:3000/api/auth/admin/' + type;
+            let payload = {};
+
+            if (type === 'login') {
+                payload.idOrEmail = document.getElementById('login-admin-id').value;
+                payload.password = document.getElementById('login-password').value;
+            } else {
+                payload.operatorName = document.getElementById('reg-name').value;
+                payload.email = document.getElementById('reg-email').value;
+                payload.password = document.getElementById('reg-key').value;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(type === 'login' ? "Signed in!" : "Account created!", "success");
+
+                    if (data.admin) localStorage.setItem('adminAuth', JSON.stringify(data.admin));
+
+                    gsap.to('.auth-card', {
+                        y: 100,
+                        opacity: 0,
+                        duration: 0.4,
+                        ease: "power2.inOut",
+                        onComplete: () => {
+                            window.location.href = path;
+                        }
+                    });
+                } else {
+                    showToast(data.error || "Request Denied", "error");
+                    btn.innerText = originalText;
+                    btn.style.opacity = "1";
+                    btn.style.pointerEvents = "auto";
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Server connection failed", "error");
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — PlaceTrack</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/style.css?v=2">
+    <link rel="stylesheet" href="../css/animations.css?v=2">
+
+    <style>
+        .dashboard-header {
+            padding-top: 8rem;
+            padding-bottom: 4rem;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 4rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 4rem;
+        }
+
+        .profile-card {
+            /* background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0) 100%); */
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            /* background: rgba(255, 255, 255, 0.05); */
+            background: rgba(15, 23, 42, 0.4);
+            border: 2px dashed var(--glass-border);
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--text-muted);
+            transition: border-color 0.4s ease;
+        }
+
+        .profile-avatar:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .app-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card:hover {
+            transform: translateX(10px);
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-dot.active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-dot.pending {
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+        }
+
+        .notification-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .notification-icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-icon-btn:hover {
+            color: var(--primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--primary);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 130%;
+            right: 0;
+            width: 320px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            display: none;
+            flex-direction: column;
+            gap: 0.8rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .notification-dropdown.show {
+            display: flex;
+            animation: fadeInDown 0.3s ease forwards;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cinematic-bg"></div>
+    <div id="three-bg-container"></div>
+
+    <nav>
+        <div class="container nav-container">
+            <a href="index.html" class="logo">Place<span style="color:var(--primary)">Track</span></a>
+            <div class="nav-links" style="display:flex; align-items:center; gap:1.5rem;">
+                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="drives.html">Drives</a>
+                <a href="eligibility.html">Eligibility</a>
+                
+                <!-- Notification Bell -->
+                <div class="notification-wrapper" id="notif-wrapper">
+                    <button class="notification-icon-btn" onclick="toggleNotifications(event)">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-badge" id="notif-badge"></span>
+                    </button>
+                    <!-- Notification Dropdown -->
+                    <div class="notification-dropdown" id="notifications-list" style="max-height: 350px; overflow-y: auto;">
+                        <p class="text-muted" style="font-size: 0.85rem; text-align: center;">Loading...</p>
+                    </div>
+                </div>
+
+                <button class="exit-portal-btn" onclick="logoutUser('student')" style="margin-left: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Log out</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="dashboard-header container">
+        <h1 class="section-title fade-in-load">Your <span class="text-gradient">Dashboard.</span></h1>
+        <p class="text-muted fade-in-load" style="animation-delay: 0.2s; font-size: 1.2rem; max-width: 600px;">
+            Your academic profile at a glance, plus your active placement applications.
+        </p>
+    </header>
+
+    <main class="container mb-16">
+        <div class="dashboard-grid">
+            <!-- Sidebar (filled dynamically) -->
+            <aside class="profile-card fade-in-load" style="animation-delay: 0.4s;">
+                <div class="profile-avatar pulse-glow" id="avatar-initial">?</div>
+                <div class="text-center mb-8">
+                    <h2 class="mb-2" style="font-size: 2rem;" id="profile-name">Loading...</h2>
+                    <p class="text-muted" style="letter-spacing: 2px; text-transform: uppercase;" id="profile-branch">—</p>
+                </div>
+
+                <div style="border-top: 1px solid var(--glass-border); padding-top: 2rem;">
+                    <div class="flex justify-between mb-4">
+                        <span class="text-muted">Current CGPA</span>
+                        <span class="text-main" style="font-weight: 700;" id="profile-cgpa">—</span>
+                    </div>
+                    <div class="flex justify-between mb-4">
+                        <span class="text-muted">Standing Backlogs</span>
+                        <span class="text-main" style="font-weight: 700;" id="profile-backlogs">—</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-muted">Status</span>
+                        <span style="font-weight: 700;" id="profile-status">—</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-outline w-full mt-8 magnetic-btn"
+                    onclick="window.location.href='eligibility.html'">Update Profile</button>
+            </aside>
+
+            <!-- Main Content Area (filled dynamically) -->
+            <div class="main-content stagger-grid">
+                <div class="flex justify-between items-center mb-8 reveal-up">
+                    <h3 style="font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px;">Active Applications
+                    </h3>
+                    <a href="drives.html" style="color: var(--accent); text-decoration: none;">Explore More...</a>
+                </div>
+
+                <div class="grid gap-4" id="applications-list">
+                    <div class="app-card" style="text-align: center; padding: 3rem;">
+                        <p class="text-muted">Loading your applications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/threeBackground.js"></script>
+    <script src="../js/scrollAnimations.js"></script>
+    <script src="../js/interactions.js"></script>
+
+    <script>
+        const API = 'http://localhost:3000/api';
+        const auth = JSON.parse(localStorage.getItem('studentAuth'));
+
+        if (!auth) { window.location.href = 'auth-student.html'; }
+
+        // Load profile from API
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${API}/student/profile?studentId=${auth.id}`);
+                const data = await res.json();
+
+                document.getElementById('avatar-initial').textContent = (data.FirstName || '?')[0];
+                document.getElementById('profile-name').textContent = data.FirstName + ' ' + data.LastName;
+                document.getElementById('profile-branch').textContent = data.Branch || 'Profile incomplete';
+                document.getElementById('profile-cgpa').textContent = data.CGPA ? parseFloat(data.CGPA).toFixed(2) : '—';
+                document.getElementById('profile-backlogs').textContent = data.Backlogs != null ? (data.Backlogs === 0 ? 'None' : data.Backlogs) : '—';
+
+                const statusEl = document.getElementById('profile-status');
+                if (data.CGPA && data.CGPA >= 7.5 && (data.Backlogs || 0) === 0) {
+                    statusEl.textContent = 'Eligible';
+                    statusEl.style.color = '#10b981';
+                } else if (data.CGPA) {
+                    statusEl.textContent = 'Limited';
+                    statusEl.style.color = '#f59e0b';
+                } else {
+                    statusEl.textContent = 'Incomplete';
+                    statusEl.style.color = '#ef4444';
+                }
+            } catch (err) {
+                console.error('Failed to load profile:', err);
+            }
+        }
+
+        // Load applications from API
+        async function loadApplications() {
+            try {
+                const res = await fetch(`${API}/student/applications?studentId=${auth.id}`);
+                const apps = await res.json();
+                const container = document.getElementById('applications-list');
+
+                if (apps.length === 0) {
+                    container.innerHTML = `
+                        <div class="app-card" style="text-align: center; padding: 3rem;">
+                            <p class="text-muted">No applications yet. <a href="drives.html" style="color: var(--accent);">Browse drives</a> to get started!</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = apps.map(app => {
+                    const statusLower = (app.Status || '').toLowerCase();
+                    const statusClass = statusLower === 'accepted' ? 'active' : 'pending';
+                    const date = new Date(app.AppliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return `
+                        <div class="app-card fade-in-load" style="animation-delay: 0.2s;">
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="status-dot ${statusClass}"></span>
+                                    <span class="text-muted" style="font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">${app.Status}</span>
+                                </div>
+                                <h4 style="font-size: 1.5rem; margin-bottom: 0.2rem;">${app.CompanyName}</h4>
+                                <p class="text-muted">Applied: ${date}</p>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-main); font-weight: 700; font-size: 1.2rem;">${app.Role}</span>
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load applications:', err);
+            }
+        } // Added missing closing brace here
+
+        function toggleNotifications(e) {
+            e.stopPropagation();
+            document.getElementById('notifications-list').classList.toggle('show');
+        }
+
+        window.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('notif-wrapper');
+            const dropdown = document.getElementById('notifications-list');
+            if (wrapper && dropdown && !wrapper.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Load notifications from API
+        async function loadNotifications() {
+            try {
+                const res = await fetch(`${API}/student/notifications?studentId=${auth.id}`);
+                const notifs = await res.json();
+                const container = document.getElementById('notifications-list');
+                const badge = document.getElementById('notif-badge');
+
+                if (!notifs || notifs.length === 0) {
+                    badge.style.opacity = '0';
+                    container.innerHTML = '<p class="text-muted" style="font-size: 0.85rem; text-align: center; padding: 1rem 0;">No new notifications</p>';
+                    return;
+                }
+
+                badge.style.opacity = '1';
+
+                container.innerHTML = `<h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">Notifications</h4>` + 
+                notifs.map(n => `
+                    <div style="background: rgba(255,255,255,0.03); padding: 0.8rem; border-radius: 8px; border-left: 2px solid var(--primary);">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.2rem;">${n.Title}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">${n.Message}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load notifications:', err);
+                document.getElementById('notifications-list').innerHTML = '<p class="text-muted" style="font-size: 0.85rem;">Failed to load.</p>';
+            }
+        }
+
+        loadProfile();
+        loadApplications();
+        loadNotifications();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,13 @@
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Environment secrets (DB credentials etc.)
+.env
+
+# Test/debug scripts
+backend/test-db.js
+
+# OS junk
+.DS_Store
+Thumbs.db

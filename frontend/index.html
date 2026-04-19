@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlaceTrack — Campus Placement Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css?v=2">
+  <link rel="stylesheet" href="../css/animations.css?v=2">
+
+  <style>
+    /* Hero Specifics */
+    .hero-section {
+      display: flex;
+      align-items: center;
+      text-align: left;
+      padding-top: 15vh;
+      overflow: hidden;
+    }
+
+    .hero-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-top: 4rem;
+    }
+
+    .hero-stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Narrative Story Sections */
+    .story-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+      padding-top: 10rem;
+      padding-bottom: 10rem;
+    }
+
+    .problem-content {
+      max-width: 800px;
+      margin-left: auto;
+      /* Push to right slightly for asymmetry */
+    }
+
+    .features-grid,
+    .drives-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-top: 4rem;
+    }
+
+    .narrative-card {
+      padding: 3rem;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--glass-border);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s;
+      position: relative;
+    }
+
+    .narrative-card:hover {
+      transform: translateY(-15px);
+      background: rgba(15, 23, 42, 0.8);
+      border-color: var(--primary);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(99, 102, 241, 0.2);
+    }
+
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-main);
+      opacity: 0.8;
+    }
+
+    .huge-number {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--glass-border);
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      transition: color 0.4s;
+    }
+
+    .narrative-card:hover .huge-number {
+      color: var(--accent);
+    }
+
+    /* Checker form embedded in narrative */
+    .checker-box {
+      max-width: 700px;
+      margin: 4rem auto 0;
+      padding: 4rem;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background Layers -->
+  <div class="cinematic-bg"></div>
+  <!-- ThreeJS Particle Canvas injected here -->
+  <div id="three-bg-container"></div>
+  <!-- Image Sequence Canvas (Global background layer) -->
+  <div id="sequence-container"
+    style="position: fixed; top: 0; left: 0; height: 100vh; width: 100vw; overflow: hidden; z-index: -1; pointer-events: none;">
+    <canvas id="hero-canvas"
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></canvas>
+  </div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="container nav-container fade-in-load">
+      <a href="#hero" class="logo">Place<span style="color:var(--primary)">Track</span></a>
+      <div class="nav-links">
+        <a href="#problem">The Problem</a>
+        <a href="#features">How It Works</a>
+        <a href="#drives">Drives</a>
+        <a href="#analyzer">Eligibility</a>
+      </div>
+      <div style="display: flex; gap: 1rem;">
+        <a href="auth-student.html" class="btn btn-outline">Student Access</a>
+        <a href="auth-admin.html" class="btn btn-outline"
+          style="border-color: rgba(244, 63, 94, 0.3); color: #fca5a5;">Admin</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero" class="hero-section story-section" style="min-height: 100vh; margin-top: 0;">
+    <canvas id="hero-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.15; pointer-events: none;"></canvas>
+    <div class="container"
+      style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; z-index: 10; position: relative;">
+      <div class="parallax-layer" data-speed="0.1">
+        <h1 class="huge-title reveal-text-line">
+          <span class="line">Placement</span><br>
+          <span class="line text-gradient-primary">Drive Tracker</span>
+        </h1>
+        <p class="fade-in-load"
+          style="animation-delay: 0.8s; font-size: 1.5rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 2rem;">
+          Find the right placement drive, check your eligibility, and track your applications — all in one place.
+        </p>
+        <div class="fade-in-load" style="animation-delay: 1.1s;">
+          <a href="#analyzer" class="btn btn-primary magnetic-btn" style="margin-right: 1rem;">Check Eligibility</a>
+          <a href="drives.html" class="btn btn-outline magnetic-btn">Browse Drives</a>
+        </div>
+      </div>
+
+      <!-- Staggered Floating Stat Cards -->
+      <div class="hero-stats-grid stagger-grid parallax-layer" data-speed="-0.05" style="margin-top: 0;">
+        <div class="hero-stat-card stagger-item">
+          <div class="text-gradient" style="font-size: 3rem; font-weight: 900;">250+</div>
+          <div class="text-muted" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Partner
+            Companies</div>
+        </div>
+        <div class="hero-stat-card stagger-item" style="transform: translateY(30px);">
+          <div class="text-gradient-primary" style="font-size: 3rem; font-weight: 900;">14k</div>
+          <div class="text-muted" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Active
+            Students</div>
+        </div>
+        <div class="hero-stat-card stagger-item">
+          <div class="text-gradient" style="font-size: 3rem; font-weight: 900;">89%</div>
+          <div class="text-muted" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Placement
+            Rate</div>
+        </div>
+        <div class="hero-stat-card stagger-item" style="transform: translateY(30px);">
+          <div class="text-gradient-primary" style="font-size: 3rem; font-weight: 900;">24/7</div>
+          <div class="text-muted" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Real-time
+            Tracking</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 1: The Problem -->
+  <section id="problem" class="story-section">
+    <div class="container relative">
+      <div class="problem-content reveal-left parallax-layer" data-speed="0.08">
+        <h2 class="section-title">The <span class="text-gradient" style="color:#ef4444">Problem.</span></h2>
+        <p
+          style="font-size: 1.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 2rem; font-weight: 300;">
+          Managing campus placements with scattered spreadsheets, email chains, and manual tracking is painful — for
+          students and coordinators alike.
+        </p>
+        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6; max-width: 600px;">
+          Students miss deadlines because eligibility criteria is buried in PDFs. Coordinators drown in unstructured
+          data. We built something better.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Features / Architecture -->
+  <section id="features" class="story-section">
+    <div class="container">
+      <div class="reveal-up text-center mb-16 parallax-layer" data-speed="-0.05">
+        <h2 class="section-title">How It <span class="text-gradient-primary">Works.</span></h2>
+        <p class="text-muted" style="font-size: 1.2rem; max-width: 600px; margin: 0 auto;">Everything you need to
+          navigate campus placements, in one dashboard.</p>
+      </div>
+
+      <div class="features-grid stagger-grid">
+        <div class="narrative-card stagger-item tilt-card">
+          <div class="huge-number">01</div>
+          <div class="card-icon">🔐</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Student Profiles</h3>
+          <p class="text-muted">Create your profile with academic details, CGPA, branch, and graduation year.
+          </p>
+        </div>
+
+        <div class="narrative-card stagger-item tilt-card">
+          <div class="huge-number">02</div>
+          <div class="card-icon">⚡</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Eligibility Check</h3>
+          <p class="text-muted">Instantly see which placement drives you qualify for based on your academic standing.
+          </p>
+        </div>
+
+        <div class="narrative-card stagger-item tilt-card">
+          <div class="huge-number">03</div>
+          <div class="card-icon">🌐</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Browse Drives</h3>
+          <p class="text-muted">View all active company drives with packages, deadlines, and roles — updated in real
+            time.
+          </p>
+        </div>
+
+        <div class="narrative-card stagger-item tilt-card">
+          <div class="huge-number">04</div>
+          <div class="card-icon">📊</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Track Applications</h3>
+          <p class="text-muted">Follow your application status from submission through interviews to final results.</p>
+        </div>
+
+        <div class="narrative-card stagger-item tilt-card">
+          <div class="huge-number">05</div>
+          <div class="card-icon">📡</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Notifications</h3>
+          <p class="text-muted">Get alerts for new drives, approaching deadlines, and interview schedules.</p>
+        </div>
+
+        <div class="narrative-card stagger-item tilt-card">
+          <div class="huge-number">06</div>
+          <div class="card-icon">⚖️</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Document Upload</h3>
+          <p class="text-muted">Upload resumes and transcripts once — they're attached to all your applications
+            automatically.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Explorer Preview -->
+  <section id="drives" class="story-section">
+    <div class="container">
+      <div class="reveal-up parallax-layer" data-speed="0.1">
+        <h2 class="section-title">Top <span class="text-gradient">Drives.</span></h2>
+        <p class="text-muted" style="font-size: 1.3rem;">Companies currently hiring from our campus.</p>
+      </div>
+
+      <div class="drives-grid stagger-grid">
+        <!-- We limit to 3 cards for the narrative preview -->
+        <article class="narrative-card stagger-item text-center">
+          <div class="glow-border"></div>
+          <div style="font-size: 3rem; font-weight: 900; color: #6366f1; margin: 1rem 0;">D</div>
+          <h3 style="font-size: 1.5rem;">Deep Systems AI</h3>
+          <div style="color:#10b981; font-weight:700; font-size: 1.5rem; margin: 1rem 0;">35.0 LPA</div>
+          <button class="btn btn-outline w-full magnetic-btn" onclick="showToast('Opening drive details...')">View
+            Details</button>
+        </article>
+        <article class="narrative-card stagger-item text-center">
+          <div class="glow-border"></div>
+          <div style="font-size: 3rem; font-weight: 900; color: #f43f5e; margin: 1rem 0;">P</div>
+          <h3 style="font-size: 1.5rem;">PayNode Global</h3>
+          <div style="color:#10b981; font-weight:700; font-size: 1.5rem; margin: 1rem 0;">28.5 LPA</div>
+          <button class="btn btn-outline w-full magnetic-btn" onclick="showToast('Opening drive details...')">View
+            Details</button>
+        </article>
+        <article class="narrative-card stagger-item text-center">
+          <div class="glow-border"></div>
+          <div style="font-size: 3rem; font-weight: 900; color: #22d3ee; margin: 1rem 0;">N</div>
+          <h3 style="font-size: 1.5rem;">Nexus Networks</h3>
+          <div style="color:#10b981; font-weight:700; font-size: 1.5rem; margin: 1rem 0;">22.0 LPA</div>
+          <button class="btn btn-outline w-full magnetic-btn" onclick="showToast('Opening drive details...')">View
+            Details</button>
+        </article>
+      </div>
+
+      <div class="text-center mt-16 reveal-up">
+        <a href="auth-student.html" class="btn btn-primary magnetic-btn"
+          style="padding: 1.5rem 3rem; font-size: 1.2rem;">See All Drives →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Eligibility Analyzer -->
+  <section id="analyzer" class="story-section" style="padding-bottom: 20rem;">
+    <div class="container">
+      <div class="text-center reveal-up">
+        <h2 class="section-title">Check Your <span class="text-gradient">Eligibility.</span></h2>
+        <p class="text-muted" style="font-size: 1.2rem;">Enter your details to see which drives you qualify for.</p>
+      </div>
+
+      <div class="checker-box reveal-up parallax-layer" data-speed="0.1">
+        <form id="eligibility-form" onsubmit="event.preventDefault(); runAnalysis();">
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 3rem;">
+            <div class="mb-8">
+              <label class="web3-label">Academic CGPA</label>
+              <input type="number" id="cgpa" step="0.01" min="0" max="10" class="web3-input" required
+                placeholder="0.00">
+            </div>
+
+            <div class="mb-8">
+              <label class="web3-label">Active Backlogs</label>
+              <input type="number" id="backlogs" min="0" class="web3-input" required placeholder="0">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 3rem;">
+            <div class="mb-8">
+              <label class="web3-label">Core Department</label>
+              <select id="branch" class="web3-input" required
+                style="cursor: pointer; appearance: none; background: url('data:image/svg+xml;utf8,<svg fill=%22white%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>') no-repeat right 10px center;">
+                <option value="">Select Branch</option>
+                <option value="CSE">Computer Science</option>
+                <option value="IT">Information Technology</option>
+                <option value="ECE">Electronics</option>
+                <option value="MECH">Mechanical</option>
+              </select>
+            </div>
+            <div class="mb-8">
+              <label class="web3-label">Graduation Year</label>
+              <input type="number" id="gradyear" min="2024" max="2030" class="web3-input" required placeholder="2027">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full magnetic-btn"
+            style="padding: 1.5rem; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
+            Check Now
+          </button>
+        </form>
+
+        <!-- Result Box injected dynamically via JS -->
+        <div id="result-box"
+          style="margin-top: 3rem; padding: 2rem; border-radius: 16px; text-align: center; display: none; opacity: 0; transform: translateY(20px);">
+          <h3 id="result-title" style="font-size: 2rem; margin-bottom: 0.5rem;"></h3>
+          <p id="result-desc" class="text-muted"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/threeBackground.js"></script>
+  <script src="../js/scrollAnimations.js"></script>
+  <script src="../js/imageSequence.js"></script>
+  <script src="../js/interactions.js"></script>
+
+  <script>
+    function runAnalysis() {
+      const cgpa = parseFloat(document.getElementById('cgpa').value);
+      const backlogs = parseInt(document.getElementById('backlogs').value);
+      const resultBox = document.getElementById('result-box');
+      const title = document.getElementById('result-title');
+      const desc = document.getElementById('result-desc');
+
+      resultBox.style.display = 'block';
+      resultBox.className = ''; // reset
+
+      let isEligible = (cgpa >= 7.5 && backlogs === 0);
+
+      if (isEligible) {
+        resultBox.classList.add('result-glow-green');
+        title.innerText = "You're eligible! 🎉";
+        title.style.color = "#10b981";
+        desc.innerText = "You meet the criteria for most Tier 1 and Tier 2 company drives. Go ahead and apply!";
+        showToast("Eligibility check passed", "success");
+      } else {
+        resultBox.classList.add('result-glow-red');
+        title.innerText = "Not eligible yet";
+        title.style.color = "#ef4444";
+        desc.innerText = "You don't meet the minimum requirements right now. Talk to your placement coordinator for more options.";
+        showToast("Eligibility check: not eligible", "error");
+      }
+
+      gsap.to(resultBox, {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "back.out(1.5)"
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Eligibility — PlaceTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css?v=2">
+    <link rel="stylesheet" href="../css/animations.css?v=2">
+
+    <style>
+        .analyzer-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .analyzer-box {
+            padding: 4rem;
+            /* background: rgba(0, 0, 0, 0.4); */
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            margin-top: 3rem;
+            backdrop-filter: blur(16px);
+        }
+
+        .result-panel {
+            margin-top: 3rem;
+            padding: 3rem;
+            border-radius: 16px;
+            text-align: center;
+            opacity: 0;
+            display: none;
+        }
+
+        .result-glow-green {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .result-glow-red {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cinematic-bg"></div>
+    <div id="three-bg-container"></div>
+
+    <nav>
+        <div class="container nav-container fade-in-load">
+            <a href="index.html" class="logo">Place<span style="color:var(--primary)">Track</span></a>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="drives.html">Drives</a>
+                <a href="eligibility.html" class="active">Eligibility</a>
+            </div>
+            <button class="exit-portal-btn" onclick="logoutUser('student')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Log out</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="container pt-navbar mb-32">
+        <div class="analyzer-container">
+            <div class="text-center reveal-up" style="margin-bottom: 4rem;">
+                <h1 class="huge-title fade-in-load">Check Your<br><span class="text-gradient-primary">Eligibility.</span>
+                </h1>
+                <p class="text-muted fade-in-load"
+                    style="animation-delay: 0.3s; font-size: 1.2rem; max-width: 500px; margin: 0 auto;">
+                    Enter your details to see which drives you qualify for.
+                </p>
+            </div>
+
+            <div class="analyzer-box reveal-up parallax-layer" data-speed="0.1">
+                <form id="eligibility-form" onsubmit="event.preventDefault(); runAnalysis();">
+                    <div class="mb-8">
+                        <label class="web3-label">Academic CGPA</label>
+                        <input type="number" id="cgpa" step="0.01" min="0" max="10" class="web3-input" required
+                            placeholder="0.00">
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="web3-label">Active Backlogs</label>
+                        <input type="number" id="backlogs" min="0" class="web3-input" required placeholder="0">
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="web3-label">Branch</label>
+                        <select id="branch" class="web3-input" required
+                            style="cursor: pointer; appearance: none; background: url('data:image/svg+xml;utf8,<svg fill=%22white%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>') no-repeat right 10px center;">
+                            <option style="background-color:grey" value="">Select Branch</option>
+                            <option style="background-color:grey" value="CSE">Computer Science</option>
+                            <option style="background-color:grey" value="IT">Information Technology</option>
+                            <option style="background-color:grey" value="ECE">Electronics</option>
+                            <option style="background-color:grey" value="MECH">Mechanical</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-16">
+                        <label class="web3-label">Graduation Year</label>
+                        <input type="number" id="gradYear" min="2024" max="2030" class="web3-input" required
+                            placeholder="2026">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full magnetic-btn"
+                        style="padding: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">
+                        Check Now
+                    </button>
+                </form>
+            </div>
+
+            <!-- Result Panel -->
+            <div id="result-box" class="result-panel">
+                <h2 id="result-title" style="font-size: 3rem; margin-bottom: 1rem;"></h2>
+                <p id="result-desc" class="text-muted" style="font-size: 1.2rem;"></p>
+                <div class="mt-8" id="result-action"></div>
+            </div>
+            
+            <!-- Document Upload Panel -->
+            <div class="analyzer-box stagger-item" style="margin-top: 2rem; grid-column: 1/-1;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Document Verification</h3>
+                <p class="text-muted" style="margin-bottom: 1.5rem;">Upload valid links to your transcripts or certificates for Admin review.</p>
+                
+                <form id="doc-form" onsubmit="event.preventDefault(); submitDocument();">
+                    <div class="grid" style="gap: 2rem; grid-template-columns: 1fr 2fr;">
+                        <div>
+                            <label class="web3-label">Document Type</label>
+                            <select id="docType" class="web3-input" required>
+                                <option value="">Select Type...</option>
+                                <option value="Resume">Resume / CV</option>
+                                <option value="Semester 6 Transcript">Semester 6 Transcript</option>
+                                <option value="12th Certificate">12th Grade Certificate</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="web3-label">File URL (Google Drive / Cloud)</label>
+                            <input type="url" id="fileUrl" class="web3-input" required placeholder="https://drive.google.com/...">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-outline mt-8 magnetic-btn">Submit for Verification</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/threeBackground.js"></script>
+    <script src="../js/scrollAnimations.js"></script>
+    <script src="../js/interactions.js"></script>
+
+    <script>
+        const API = 'http://localhost:3000/api';
+        const auth = JSON.parse(localStorage.getItem('studentAuth'));
+        if (!auth) { window.location.href = 'auth-student.html'; }
+
+        // Pre-fill form if profile exists
+        async function prefillForm() {
+            try {
+                const res = await fetch(`${API}/student/profile?studentId=${auth.id}`);
+                const data = await res.json();
+                if (data.CGPA) document.getElementById('cgpa').value = data.CGPA;
+                if (data.Backlogs != null) document.getElementById('backlogs').value = data.Backlogs;
+                if (data.Branch) document.getElementById('branch').value = data.Branch;
+                if (data.GradYear) document.getElementById('gradYear').value = data.GradYear;
+            } catch (err) { /* first time, form stays empty */ }
+        }
+
+        async function runAnalysis() {
+            const cgpa = parseFloat(document.getElementById('cgpa').value);
+            const backlogs = parseInt(document.getElementById('backlogs').value);
+            const branch = document.getElementById('branch').value;
+            const gradYear = parseInt(document.getElementById('gradYear').value);
+            const resultBox = document.getElementById('result-box');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+            const action = document.getElementById('result-action');
+
+            if (!branch || !gradYear) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Save profile to database
+            try {
+                await fetch(`${API}/student/profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: auth.id, cgpa, branch, gradYear, backlogs })
+                });
+            } catch (err) {
+                console.error('Failed to save profile:', err);
+            }
+
+            resultBox.className = 'result-panel';
+            resultBox.style.display = 'block';
+
+            let isEligible = (cgpa >= 7.5 && backlogs === 0);
+
+            if (isEligible) {
+                resultBox.classList.add('result-glow-green');
+                title.innerText = "You're eligible! 🎉";
+                title.style.color = "#10b981";
+                desc.innerText = "You meet the requirements for most Tier 1 and Tier 2 drives. Go ahead and apply!";
+                action.innerHTML = '<a href="drives.html" class="btn btn-outline magnetic-btn" style="border-color: #10b981; color: #10b981;">Browse Drives</a>';
+                showToast("Profile saved & eligibility check passed!", "success");
+            } else {
+                resultBox.classList.add('result-glow-red');
+                title.innerText = "Not eligible yet";
+                title.style.color = "#ef4444";
+                desc.innerText = "Your current academic standing doesn't meet the minimum requirements. Talk to your placement coordinator for options.";
+                action.innerHTML = '<button onclick="showToast(\'Request sent to coordinator\',\'info\')" class="btn btn-outline magnetic-btn" style="border-color: #ef4444; color: #ef4444;">Request Review</button>';
+                showToast("Profile saved. Not eligible at this time", "error");
+            }
+
+            // Animate results in
+            gsap.fromTo(resultBox,
+                { y: 30, opacity: 0, scale: 0.95 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.5)" }
+            );
+        }
+
+        async function submitDocument() {
+            const documentType = document.getElementById('docType').value;
+            const fileUrl = document.getElementById('fileUrl').value;
+            
+            if(!documentType || !fileUrl) return;
+
+            try {
+                const res = await fetch(`${API}/student/docs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId: auth.id, documentType, fileUrl })
+                });
+                
+                if(res.ok) {
+                    showToast('Document submitted for verification', 'success');
+                    document.getElementById('doc-form').reset();
+                } else {
+                    showToast('Failed to submit document', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Server error', 'error');
+            }
+        }
+
+        prefillForm();
+    </script>
+</body>
+
+</html>

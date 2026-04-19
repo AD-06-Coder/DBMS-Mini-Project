@@ -1,0 +1,304 @@
+# PlaceTrack — Complete Project Documentation
+
+> A full-stack Campus Placement Tracking System built as a DBMS Mini Project using MS SQL Server, Node.js, and vanilla HTML/CSS/JS.
+
+---
+
+## 1. What is PlaceTrack?
+
+PlaceTrack is a **web-based placement management portal** with two distinct user roles:
+
+- **Students** — Register, build their academic profile, browse active company drives, check their eligibility, and apply.
+- **Admins (Placement Officers)** — Monitor all students, manage company drives, review and update application statuses, and broadcast notifications.
+
+Everything is connected to a **real MS SQL Server database**. No fake data. No local JSON files.
+
+---
+
+## 2. Technology Stack
+
+| Layer | Technology | Why |
+|---|---|---|
+| Database | **MS SQL Server** | Relational DB for normalized data, supports stored procedures and views |
+| Backend | **Node.js + Express.js** | Handles HTTP API requests between the browser and the database |
+| Authentication | **SHA-256 hashing** via `js-sha256` | Passwords are never stored in plain text |
+| Frontend | **HTML + Vanilla CSS + JavaScript** | No framework dependencies, clean and lightweight |
+| 3D Effects | **Three.js + GSAP** | For the cinematic particle background and UI animations |
+| SQL Driver | **`mssql` npm package** | Connects Node.js to the SQL Server instance |
+
+---
+
+## 3. Folder Structure
+
+```
+dbms mini/
+├── backend/
+│   ├── server.js       <- All API routes (the brain of the backend)
+│   ├── db.js           <- Database connection logic (connection pool)
+│   ├── init.sql        <- The entire DB schema + seed data in one file
+│   └── package.json    <- Node.js dependencies
+├── frontend/
+│   ├── index.html      <- Landing page (public)
+│   ├── auth-student.html <- Student Login / Sign Up
+│   ├── auth-admin.html <- Admin Login
+│   ├── dashboard.html  <- Student dashboard (protected)
+│   ├── drives.html     <- Browse open placement drives (protected)
+│   ├── eligibility.html <- Eligibility checker (protected)
+│   ├── admin.html      <- Admin dashboard (protected)
+│   └── admin-modules.html <- Admin system settings (protected)
+├── css/
+│   ├── style.css       <- Global styles
+│   └── animations.css  <- Shared animation utilities
+└── js/
+    ├── main.js         <- Navbar, scroll, global setup
+    ├── threeBackground.js <- Animated particle canvas
+    ├── scrollAnimations.js <- Reveal-on-scroll effects
+    └── interactions.js <- Hover effects, magnetic buttons
+```
+
+---
+
+## 4. The Database (MS SQL Server)
+
+The database is named **`PlacementTrackerDB`** and contains **7 tables**, **3 views**, and **3 stored procedures**.
+
+### 4.1 Tables
+
+#### [Students](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/admin-modules.html#273-300)
+Stores login credentials for student accounts.
+```
+StudentID (PK), FirstName, LastName, RollNumber (UNIQUE), Email (UNIQUE), PasswordHash, CreatedAt
+```
+
+#### `StudentProfiles`
+Stores academic details. This is kept **separate** from [Students](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/admin-modules.html#273-300) because a student signs up first, then fills their profile later.
+```
+ProfileID (PK), StudentID (FK → Students), CGPA, Branch, GradYear, Backlogs, UpdatedAt
+```
+> **Why separate?** If we merged it into Students, every student would need to provide CGPA at signup, which is bad UX. The separation follows the **1NF/2NF normalization principle** — each table has a single responsibility.
+
+#### `Admins`
+Stores Placement Officer accounts.
+```
+AdminID (PK), OperatorName, DepartmentEmail (UNIQUE), PasswordHash, RoleLevel, CreatedAt
+```
+
+#### `Companies`
+A master table of recruiting companies.
+```
+CompanyID (PK), Name, LogoInitial, LogoColor, Website, CreatedAt
+```
+
+#### [Drives](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/drives.html#168-180)
+Each placement drive belongs to one company. Stores role, salary, deadline, and eligibility criteria.
+```
+DriveID (PK), CompanyID (FK → Companies), Role, PackageLPA, Deadline, Description,
+MinCGPA, MaxBacklogs, AllowedBranches, IsActive, CreatedAt
+```
+> **`FOREIGN KEY REFERENCES Companies(CompanyID)`** — This enforces referential integrity. You cannot create a drive for a company that doesn't exist.
+
+#### [Applications](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/dashboard.html#302-340)
+Records which student applied to which drive.
+```
+ApplicationID (PK), StudentID (FK → Students), DriveID (FK → Drives),
+Status (Applied/In Review/Accepted/Rejected), AppliedAt, UpdatedAt
+CONSTRAINT UQ_StudentDrive UNIQUE (StudentID, DriveID)  — prevents applying twice
+```
+
+#### [Notifications](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/dashboard.html#354-382)
+System alerts to students. If `StudentID` is NULL, it is a **broadcast** to everyone.
+```
+NotificationID (PK), StudentID (FK, nullable), Title, Message, Type, IsRead, CreatedAt
+```
+
+#### `Documents`
+Stores uploaded transcript/certificate records for verification.
+```
+DocumentID (PK), StudentID (FK → Students), DocumentType, FileUrl, VerificationStatus, UploadedAt, VerifiedAt
+```
+
+---
+
+### 4.2 Views (Pre-written JOINs)
+
+Views are like **saved queries**. Instead of writing a complex JOIN every time, we define it once as a view and simply call `SELECT * FROM view_name`.
+
+#### `vw_DriveDetails`
+Joins [Drives](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/drives.html#168-180) + `Companies` to produce one rich row per drive with the company name, logo, and total applicant count (a **subquery** inside the view).
+```sql
+SELECT d.*, c.Name AS CompanyName, c.LogoInitial, c.LogoColor,
+    (SELECT COUNT(*) FROM Applications WHERE DriveID = d.DriveID) AS TotalApplications
+FROM Drives d JOIN Companies c ON d.CompanyID = c.CompanyID
+```
+
+#### `vw_StudentDashboard`
+Joins [Applications](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/dashboard.html#302-340) + [Drives](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/frontend/drives.html#168-180) + `Companies` to give a student a full view of their applied drives with company name, role, and status.
+
+#### `vw_AdminDashboard`
+A single row of aggregate stats for the admin panel:
+- Total registered students
+- Active drives count  
+- Total students placed (Accepted status)
+- Total applications
+
+These use **scalar subqueries** (`SELECT COUNT(*) FROM ... WHERE ...`) — four separate subqueries all collapsed into one row.
+
+---
+
+### 4.3 Stored Procedures (Business Logic in SQL)
+
+#### `sp_CheckEligibility(@StudentID, @DriveID)`
+Checks if a student is eligible for a specific drive. Returns `IsEligible` (1 or 0) and a `Reason` message.
+
+**Steps:**
+1. Fetch student's CGPA, Branch, and Backlogs from `StudentProfiles`
+2. Fetch the drive's `MinCGPA`, `MaxBacklogs`, `AllowedBranches`
+3. Run three sequential IF checks — if any fail, it immediately returns with a reason
+4. If all pass, returns eligible = 1
+
+Uses `CHARINDEX()` to check if the student's branch exists within the comma-separated `AllowedBranches` string.
+
+#### `sp_GetEligibleDrives(@StudentID)`
+Returns all active drives filtered to only those the student qualifies for. Uses the same CGPA/Backlog/Branch criteria in the `WHERE` clause applied directly to `vw_DriveDetails`. Also adds a computed column `AlreadyApplied` using `EXISTS`.
+
+#### `sp_ApplyToDrive(@StudentID, @DriveID)`
+The most important stored procedure. Called when a student clicks "Apply".
+
+**Steps:**
+1. Check if they already applied — if YES, return failure (duplicate prevention)
+2. Fetch the student's profile — if missing, return failure
+3. Fetch the drive details — if `IsActive = 0`, return failure
+4. Check CGPA and backlogs
+5. Check branch eligibility
+6. If everything passes: `INSERT INTO Applications (StudentID, DriveID, Status) VALUES (...)` with status `'Applied'`
+7. Return success message
+
+> **Why do this in a stored procedure and not just a Node.js query?**  
+> It keeps the business logic close to the data. If multiple clients (a mobile app in the future) need to apply, they all call the same procedure and get the same safety checks. It's more secure and consistent.
+
+---
+
+## 5. The Backend API (server.js)
+
+The Node.js server runs on **`http://localhost:3000`** and exposes a REST API. The frontend fetches from this API using JavaScript's `fetch()`.
+
+### Connection Pooling ([db.js](file:///c:/Users/Aadithya/OneDrive/Desktop/dbms%20mini/backend/db.js))
+Instead of opening a new database connection on every single request (which would be slow), we create a **connection pool** — a set of pre-opened connections that are reused. `mssql` manages this automatically once `poolPromise` is initialized.
+
+Uses **Windows Authentication** (no username/password needed since both Node and SQL Server run on the same machine under the same Windows account).
+
+### API Routes Summary
+
+| Method | Route | What it does |
+|---|---|---|
+| `POST` | `/api/auth/student/signup` | Registers a new student (checks for duplicates, hashes password) |
+| `POST` | `/api/auth/student/login` | Validates credentials, returns student object to store in localStorage |
+| `POST` | `/api/auth/admin/signup` | Registers a new admin |
+| `POST` | `/api/auth/admin/login` | Validates admin credentials |
+| `GET` | `/api/student/profile?studentId=` | Fetches one student's profile (JOIN query) |
+| `POST` | `/api/student/profile` | Creates or updates profile using SQL **MERGE** (upsert) |
+| `GET` | `/api/drives` | Returns all active drives via `vw_DriveDetails` |
+| `POST` | `/api/drives/:id/apply` | Calls `sp_ApplyToDrive` stored procedure |
+| `GET` | `/api/student/eligible-drives` | Calls `sp_GetEligibleDrives` stored procedure |
+| `GET` | `/api/student/applications` | Fetches the student's application history from `vw_StudentDashboard` |
+| `POST` | `/api/eligibility/check` | Calls `sp_CheckEligibility` stored procedure |
+| `GET` | `/api/admin/stats` | Fetches aggregate stats from `vw_AdminDashboard` |
+| `GET` | `/api/admin/applications` | Returns latest 50 applications with student and company names |
+| `PATCH` | `/api/admin/applications/:id` | Updates application status AND auto-inserts a Notification |
+| `POST` | `/api/admin/drives` | Creates a new company + drive (finds or creates the company first) |
+| `GET` | `/api/admin/drives/:id/applicants` | Lists all students who applied to a specific drive |
+| `PATCH` | `/api/admin/drives/:id/close` | Sets `IsActive = 0` on a drive |
+| `GET` | `/api/admin/students` | Lists all students with their profile |
+| `POST` | `/api/admin/notify` | Broadcasts a notification (NULL StudentID = global) |
+| `GET` | `/api/student/notifications` | Fetches personal + broadcast notifications |
+
+### Parameterized Queries (SQL Injection Prevention)
+All queries use `.input('ParamName', sql.Type, value)` — **never** string concatenation. This means even if a malicious user types `'; DROP TABLE Students; --` into a form, it is treated as literal text, not SQL.
+
+```js
+// SAFE — parameterized
+pool.request().input('Email', sql.NVARCHAR, email).query('SELECT * FROM Students WHERE Email = @Email');
+
+// UNSAFE (we never do this) — vulnerable to SQL injection
+pool.request().query(`SELECT * FROM Students WHERE Email = '${email}'`);
+```
+
+### Password Hashing
+Passwords are passed through `sha256()` before being stored or compared. The hash is a fixed 64-character hex string. Even if someone accessed the database directly, they would see only the hash, not the real password.
+
+---
+
+## 6. Session Management (Frontend)
+
+Since this is a plain HTML/JS app (no framework like React), sessions are managed using **`localStorage`** in the browser.
+
+**On login/signup success:**
+```js
+localStorage.setItem('studentAuth', JSON.stringify({ id: 5, firstName: 'Aadi', rollNumber: 'NNM24CS001' }));
+```
+
+**On every protected page load:**
+```js
+const auth = JSON.parse(localStorage.getItem('studentAuth'));
+if (!auth) window.location.href = 'auth-student.html'; // Redirect if not logged in
+```
+
+**On logout:**
+```js
+localStorage.removeItem('studentAuth');
+window.location.href = 'auth-student.html';
+```
+
+This is a simple, stateless session system. The server does not maintain sessions — it trusts whatever `studentId` the browser sends. (For a production system, JWT tokens would be used instead.)
+
+---
+
+## 7. Key DBMS Concepts Used
+
+| Concept | Where Used |
+|---|---|
+| **Normalization (1NF, 2NF, 3NF)** | Students and StudentProfiles are separated — no repeating groups |
+| **Primary Keys** | Every table has a surrogate `INT IDENTITY` PK |
+| **Foreign Keys** | Students←Applications→Drives←Companies — enforces referential integrity |
+| **UNIQUE Constraints** | `RollNumber`, `Email` — prevents duplicate registrations |
+| **Composite UNIQUE** | `UNIQUE(StudentID, DriveID)` — prevents applying to the same drive twice |
+| **Views** | 3 views wrap complex JOINs for reusability |
+| **Stored Procedures** | 3 procedures encapsulate business logic (eligibility, application, eligible drives) |
+| **MERGE (Upsert)** | Profile creation — INSERT if new, UPDATE if exists |
+| **OUTPUT Clause** | Returns the newly inserted ID without a second SELECT |
+| **Aggregate Subqueries** | `COUNT(*)` subqueries inside `vw_AdminDashboard` |
+| **CHARINDEX()** | String-based branch matching in eligibility checks |
+| **Parameterized Queries** | All queries — prevents SQL injection |
+| **Conditional Logic in SQL** | IF/ELSE blocks inside stored procedures |
+| **Transactions (implicit)** | SQL Server auto-wraps single statements in transactions |
+
+---
+
+## 8. Likely Lecturer Questions & Answers
+
+**Q: Why did you separate Students and StudentProfiles into two tables?**  
+A: To follow the Single Responsibility Principle and 2NF normalization. Login data (email, password) is separate from academic data (CGPA, branch) because they change at different frequencies and are accessed for different purposes.
+
+**Q: What is a stored procedure and why did you use them?**  
+A: A stored procedure is precompiled SQL code stored in the database itself. We used them for eligibility checking and applying to drives because the logic involves multiple conditional checks. If the logic lives in the DB, any client (web, mobile) calling the procedure gets the same guaranteed behavior.
+
+**Q: What happens if a student applies to the same drive twice?**  
+A: Two things prevent it. First, the `sp_ApplyToDrive` procedure checks `IF EXISTS (SELECT 1 FROM Applications WHERE StudentID=... AND DriveID=...)`. Second, there is a `UNIQUE CONSTRAINT UQ_StudentDrive` on the Applications table — even if the SP logic is bypassed, the DB itself will reject the duplicate INSERT with an error.
+
+**Q: How does the eligibility check work?**  
+A: The `sp_CheckEligibility` procedure fetches the student's CGPA, Branch, and Backlogs from `StudentProfiles`. It then fetches the drive's `MinCGPA`, `MaxBacklogs`, and `AllowedBranches`. It runs three sequential checks — CGPA threshold, backlog count, and branch inclusion using `CHARINDEX`. If any check fails it immediately returns with a descriptive reason. Only if all three pass does it return eligible.
+
+**Q: What is a View in SQL? How did you use them?**  
+A: A View is a virtual table defined by a stored query. We created `vw_DriveDetails`, `vw_StudentDashboard`, and `vw_AdminDashboard`. Instead of writing the same multi-table JOINs in every API route, we write it once as a view and then just do `SELECT * FROM vw_...`. It improves code reuse and makes the queries easier to read and maintain.
+
+**Q: How are passwords protected?**  
+A: Passwords are hashed using the SHA-256 algorithm before being saved. SHA-256 is a one-way hash — you cannot reverse it to get the original password. On login, we hash the entered password and compare it against the stored hash. The real password is never stored anywhere.
+
+**Q: What is connection pooling?**  
+A: Instead of opening and closing a new database connection for every API request (expensive), a connection pool pre-opens a set of connections and reuses them. Node.js's `mssql` library manages this with `poolPromise`. All API routes share the same pool.
+
+**Q: What prevents SQL injection in your system?**  
+A: All database queries use parameterized inputs via `.input('Name', sql.Type, value)` with `@Name` placeholders. The `mssql` driver sends the parameter separately from the query string, so user input is never interpreted as SQL code.
+
+**Q: What does the MERGE statement do?**  
+A: MERGE is an "upsert" — UPDATE if the row exists, INSERT if it doesn't. We use it in `POST /api/student/profile` so a student can save their profile whether they are setting it for the first time or editing it later, without needing two different API calls.

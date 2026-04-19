@@ -1,0 +1,68 @@
+/* 
+  Initial states for ScrollTrigger narrative animations 
+*/
+
+/* Elements sliding from the left (Problem Section) */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-100px);
+    will-change: transform, opacity;
+}
+
+.reveal-up {
+    opacity: 0;
+    transform: translateY(60px);
+    will-change: transform, opacity;
+}
+
+/* Array of cards staggering up */
+.stagger-item {
+    opacity: 0;
+    transform: translateY(40px);
+    will-change: transform, opacity;
+}
+
+/* Sequential Text layer */
+.reveal-text-line {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.reveal-text-line .line {
+    display: inline-block;
+    transform: translateY(100%);
+    opacity: 0;
+}
+
+/* Glow effects for eligibility checker */
+.result-glow-green {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    box-shadow: 0 0 50px rgba(16, 185, 129, 0.2) !important;
+}
+
+.result-glow-red {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    box-shadow: 0 0 50px rgba(239, 68, 68, 0.2) !important;
+}
+
+@keyframes scroll-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(10px);
+    }
+}
+
+.scroll-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scroll-bounce 2s infinite ease-in-out;
+    opacity: 0.5;
+}
